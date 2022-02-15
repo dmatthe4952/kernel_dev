@@ -5,6 +5,7 @@
 #include "memory/heap/kheap.h"
 #include "memory/memory.h"
 #include "memory/paging/paging.h"
+#include "keyboard/keyboard.h"
 #include "disk/disk.h"
 #include "fs/pparser.h"
 #include "fs/file.h"
@@ -90,7 +91,7 @@ struct gdt_structured gdt_structured[PEACHOS_TOTAL_GDT_SEGMENTS] = {
     {.base = 0x00, .limit = 0xFFFFFFFF, .type = 0x92},   //Kernel data segment
     {.base = 0x00, .limit = 0xFFFFFFFF, .type = 0xF8},   //User code segment
     {.base = 0x00, .limit = 0xFFFFFFFF, .type = 0xF2},   //User data segment
-    {.base = (uint32_t) &tss, .limit = sizeof(tss), .type = 0xE9}    //Task Switch segment 
+    {.base = (uint32_t)&tss, .limit = sizeof(tss), .type = 0xE9}    //Task Switch segment 
 };
 
 void kernel_main()
@@ -137,6 +138,9 @@ void kernel_main()
 
     // Register the kernel commands
     isr80h_register_commands();
+
+    // Initialize keyboard
+    keyboard_init();
 
     struct process* process = 0;
     int res = process_load("0:/blank.bin", &process);
