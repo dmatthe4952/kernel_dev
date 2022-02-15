@@ -161,7 +161,7 @@ int process_load_for_slot(const char* filename, struct process** process, int pr
     }
 
     strncpy(_process->filename, filename, sizeof(_process->filename)); 
-    _process->stack = &program_stack_ptr;
+    _process->stack = program_stack_ptr;
     _process->id = process_slot;
 
     // Create a task

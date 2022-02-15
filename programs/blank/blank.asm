@@ -5,11 +5,13 @@ section .asm
 global _start
 
 _start:
-    mov eax, 0
-    push 20
-    push 30
-    mov eax, 0 ;Command0_sum
+
+    push message
+    mov eax, 1 ; Print command
     int 0x80
-    add esp, 8
+    add esp, 4
 
     jmp $
+
+section .data
+message: db 'I can talk to the kernel!', 0

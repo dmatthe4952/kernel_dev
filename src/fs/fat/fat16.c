@@ -1,15 +1,12 @@
 #include "fat16.h"
-#include "status.h"
 #include "string/string.h"
-#include <stdint.h>
 #include "disk/disk.h"
 #include "disk/streamer.h"
-#include "memory/memory.h"
 #include "memory/heap/kheap.h"
-#include "file.h"
+#include "memory/memory.h"
+#include "status.h"
 #include "kernel.h"
-#include "pparser.h"
-#include "string/string.h"
+#include <stdint.h>
 
 #define PEACHOS_FAT16_SIGNATURE 0x29
 #define PEACHOS_FAT16_FAT_ENTRY_SIZE 0x02
@@ -153,6 +150,11 @@ static void fat16_init_private(struct disk* disk, struct fat_private* private)
     private->directory_stream = diskstreamer_new(disk->id);
 }
 
+int fat16_sector_to_absolute(struct disk* disk, int sector)
+{
+    return sector * disk->sector_size;
+}
+
 int fat16_get_total_items_for_directory(struct disk* disk, uint32_t directory_start_sector)
 {
     struct fat_directory_item item;
@@ -194,11 +196,6 @@ out:
     return res;
 }
 
-int fat16_sector_to_absolute(struct disk* disk, int sector)
-{
-    return sector * disk->sector_size;
-}
-
 int fat16_get_root_directory(struct disk* disk, struct fat_private* fat_private, struct fat_directory* directory)
 {
     int res = 0;
@@ -236,12 +233,11 @@ int fat16_get_root_directory(struct disk* disk, struct fat_private* fat_private,
     directory->item = dir;
     directory->total = total_items;
     directory->sector_pos = root_dir_sector_pos;
-    directory->ending_sector_pos = root_dir_sector_pos + root_dir_size / disk->sector_size;
-
-
+    directory->ending_sector_pos = root_dir_sector_pos + root_dir_size / disk->sector_size;    
 out:
     return res;
 }
+
 int fat16_resolve(struct disk* disk)
 {
     int res = 0;
@@ -275,7 +271,6 @@ int fat16_resolve(struct disk* disk)
         res = -EIO;
         goto out;
     }
-
 
 out:
     if(stream)
@@ -332,6 +327,16 @@ struct fat_directory_item* fat16_clone_directory_item(struct fat_directory_item*
     }
     memcpy(item_copy, item, size);
     return item_copy;
+}
+
+static uint32_t fat16_get_first_cluster(struct fat_directory_item* item)
+{
+    return item->high_16_bits_first_cluster | item->low_16_bits_first_cluster;
+}
+
+int fat16_cluster_to_sector(struct fat_private* private, int cluster)
+{
+     return private->root_directory.ending_sector_pos + ((cluster - 2) * private->header.primary_header.sectors_per_cluster);
 }
 
 static uint32_t fat16_get_first_fat_sector(struct fat_private* private)
@@ -417,11 +422,6 @@ out:
     return res;
 }
 
-int fat16_cluster_to_sector(struct fat_private* private, int cluster)
-{
-     return private->root_directory.ending_sector_pos + ((cluster - 2) * private->header.primary_header.sectors_per_cluster);
-}
-
 static int fat16_read_internal_from_stream(struct disk* disk, struct disk_stream* stream, int cluster, int offset, int total, void* out)
 {
     int res = 0;
@@ -469,11 +469,6 @@ static int fat16_read_internal(struct disk* disk, int starting_cluster, int offs
     return fat16_read_internal_from_stream(disk, stream, starting_cluster, offset, total, out);
 }
 
-static uint32_t fat16_get_first_cluster(struct fat_directory_item* item)
-{
-    return item->high_16_bits_first_cluster | item->low_16_bits_first_cluster;
-}
-
 void fat16_free_directory(struct fat_directory* directory)
 {
     if (!directory)
@@ -494,7 +489,8 @@ void fat16_fat_item_free(struct fat_item* item)
     if (item->type == FAT_ITEM_TYPE_DIRECTORY)
     {
         fat16_free_directory(item->directory);
-    }else if (item->type == FAT_ITEM_TYPE_FILE)
+    }
+    else if (item->type == FAT_ITEM_TYPE_FILE)
     {
         kfree(item->item);
     }
@@ -507,7 +503,6 @@ struct fat_directory* fat16_load_fat_directory(struct disk* disk, struct fat_dir
     int res = 0;
     struct fat_directory* directory = 0;
     struct fat_private* fat_private = disk->fs_private;
-
     if(!(item->attribute & FAT_FILE_SUBDIRECTORY))
     {
         res = -EINVARG;
@@ -604,8 +599,6 @@ struct fat_item* fat16_get_directory_entry(struct disk* disk, struct path_part* 
         current_item = tmp_item;
         next_part = next_part->next;
     }
-
-
 out:
     return current_item;
 }
@@ -657,9 +650,11 @@ int fat16_stat(struct disk* disk, void* private, struct file_stat* stat)
         res = -EINVARG;
         goto out;
     }
+
     struct fat_directory_item* ritem = desc_item->item;
     stat->filesize = ritem->filesize;
     stat->flags = 0X00;
+
     if (ritem->attribute & FAT_FILE_READ_ONLY)
     {
         stat->flags |= FILE_STAT_READ_ONLY;
@@ -686,11 +681,9 @@ int fat16_read(struct disk* disk, void* descriptor, uint32_t size, uint32_t nmem
 
         out_ptr += size;
         offset += size;
-
     }
 
     res = nmemb;    
-
 out:
     return res;
 }
@@ -716,15 +709,15 @@ int fat16_seek(void* private, uint32_t offset, FILE_SEEK_MODE seek_mode)
     {
         case SEEK_SET:
             desc->pos = offset;
-        break;
+            break;
 
-        case SEEK_CURRENT:
+        case SEEK_CUR:
             desc->pos += offset;
-        break;
+            break;
 
         case SEEK_END:
             res = -EUNIMP;
-        break;
+            break;
 
         default:
             res = -EINVARG;
@@ -734,7 +727,6 @@ int fat16_seek(void* private, uint32_t offset, FILE_SEEK_MODE seek_mode)
     {
         res = desc->pos;
     }
-
 out:
     return res;
 }

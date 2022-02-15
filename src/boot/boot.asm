@@ -55,7 +55,7 @@ step2:
     jmp CODE_SEG:load32
 
 
-    jmp $
+;    jmp $
 
 
 ;GDT

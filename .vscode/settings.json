@@ -1,5 +1,8 @@
 {
     "C_Cpp.default.includePath": [
         "../"
-    ]
+    ],
+    "files.associations": {
+        "gdt.h": "c"
+    }
 }
