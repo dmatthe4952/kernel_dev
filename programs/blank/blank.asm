@@ -6,12 +6,21 @@ global _start
 
 _start:
 
-    push message
-    mov eax, 1 ; Print command
+_loop:
+    call getkey
+    push eax
+    mov eax, 3 ; Command putchar
     int 0x80
     add esp, 4
+    jmp _loop
 
-    jmp $
+getkey:
+    mov eax, 2 ; Command getkey
+    int 0x80
+    cmp eax, 0x00
+    je getkey
+    ret
+
 
 section .data
 message: db 'I can talk to the kernel!', 0

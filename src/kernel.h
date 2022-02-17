@@ -11,6 +11,7 @@ void kernel_page();
 void kernel_registers();
 void print(const char *s);
 void panic(const char* msg);
+void terminal_writechar(char c, char color);
 
 #define ISERR(value) ((int) value < 0)
 #define ERROR(value) (void*) value
