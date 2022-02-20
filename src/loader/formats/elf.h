@@ -62,12 +62,12 @@
 
 //special section indexes
 #define SHN_UNDEF 0
-#define SHN_LORESERVE 0xff00
-#define SHN_LOPROC 0xff00
-#define SHN_HIPROC 0xff1f
-#define SHN_ABS 0xfff1
-#define SHN_COMMON 0xfff2
-#define SHN_HIRESERVE 0xffff
+// #define SHN_LORESERVE 0xff00
+// #define SHN_LOPROC 0xff00
+// #define SHN_HIPROC 0xff1f
+// #define SHN_ABS 0xfff1
+// #define SHN_COMMON 0xfff2
+// #define SHN_HIRESERVE 0xffff
 
 typedef uint16_t elf32_half;
 typedef uint32_t elf32_word;
@@ -99,7 +99,7 @@ struct elf32_shdr
     elf32_word sh_info;
     elf32_word sh_addralign;
     elf32_word sh_entsize;
-}__attribute__((padked));
+}__attribute__((packed));
 
 struct elf_header
 {

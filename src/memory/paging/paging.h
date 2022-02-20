@@ -24,6 +24,7 @@ struct paging_4gb_chunk
 
 bool paging_is_aligned(void* addr);
 void* paging_align_address(void* ptr);
+void* paging_align_to_lower_page(void* addr);
 struct paging_4gb_chunk* paging_new_4gb(uint8_t flags);
 uint32_t* paging_4gb_chunk_get_directory(struct paging_4gb_chunk* chunk);
 void paging_switch(struct paging_4gb_chunk* directory );

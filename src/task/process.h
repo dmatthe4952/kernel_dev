@@ -3,8 +3,12 @@
 #include <stdint.h>
 #include "config.h"
 #include "task.h"
+#include <stdbool.h>
 
 
+#define PROCESS_FILETYPE_ELF 0
+#define PROCESS_FILETYPE_BINARY 1
+typedef unsigned char PROCESS_FILETYPE;
 struct process
 {
     //The process id
@@ -18,9 +22,16 @@ struct process
     //The memory (malloc) allocations of the process
     void* allocations[PEACHOS_MAX_PROGRAM_ALLOCATIONS];
 
-    // The physical pointer to the process memory
-    void* ptr;
+    PROCESS_FILETYPE filetype;
 
+    union //shared memory space
+    {
+        // The physical pointer to the process memory
+        void* ptr;
+        // A pointer to an elf file
+        struct elf_file* elf_file;
+    };
+    
     // The physical pointer to the stack memory
     void* stack;
 
@@ -42,5 +53,7 @@ int process_load(const char* filename, struct process** process);
 int process_load_for_slot(const char* filename, struct process** process, int process_slot);
 struct process* process_current();
 struct process* process_get(int process_id);
+void* process_malloc(struct process* process, size_t size);
+void process_free(struct process* process, void* ptr);
 
 #endif
